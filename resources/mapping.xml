@@ -1,0 +1,115 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+ 
+<hibernate-mapping package="com.project.entity">
+
+	<!-- 管理员 -->
+	<class name="AdminEntity" table="admin">
+		<id name="id" type="int" column="id">
+			<generator class="identity" />
+		</id>
+		<property name="login" column="login"/>
+		<property name="name" column="name"/>
+		<property name="pass" column="pass"/>
+		<bag name="categoryEntities" cascade="save-update" inverse="true" lazy="false"><!-- inverse=true表示被反向控制的一方，不负责维护关系，cascade级联失效（默认为false） -->
+			<key column="FK_admin"/><!-- 从表外键 -->
+			<one-to-many class="CategoryEntity"/><!-- 查询从表数据，形成list保存到categoryEntities中（注意bag和set区别） -->
+		</bag>
+	</class>
+	
+    <!-- 商品类别 -->
+	<class name="CategoryEntity" table="category">
+		<id name="id" column="id">
+			<generator class="identity" />
+		</id>
+		<property name="type" column="type"/>
+		<property name="hot" column="hot"/>
+		<many-to-one name="adminEntity" column="FK_admin" class="AdminEntity" lazy="false"/><!-- 使用急加载 -->
+		<bag name="productEntities" cascade="save-update" inverse="true" lazy="false">
+			<key column="FK_category"/>
+			<one-to-many class="ProductEntity"/>
+		</bag>
+	</class>
+	
+	<!-- 商品 -->
+	<class name="ProductEntity" table="product">
+		<id name="id" column="id">
+			<generator class="identity" />
+		</id>
+		<property name="name" column="name"/>
+		<property name="price" column="price"/>
+		<property name="pic" column="pic"/>
+		<property name="remark" column="remark"/>
+		<property name="xremark" column="xremark"/>
+		<property name="date" column="date"/>
+		<property name="commend" column="commend"/>
+		<property name="open" column="open"/>
+		<many-to-one name="categoryEntity" column="FK_category" class="CategoryEntity" lazy="false"/>
+	</class>
+	
+	<!-- 用户 -->
+	 <class name="UserEntity" table="user">
+		 <id name="id" column="id">
+			 <generator class="identity" />
+		 </id>
+		<property name="login" column="login"/>
+		<property name="name" column="name"/>
+		<property name="pass" column="pass"/>
+		<property name="sex" column="sex"/>
+		<property name="phone" column="phone"/>
+		<property name="email" column="email"/>
+		<bag name="orderEntities" cascade="save-update" inverse="true" lazy="false">
+			<key column="FK_user"/>
+			<one-to-many class="OrderEntity"/>
+		</bag>
+	</class>
+
+	<!-- 订单 -->
+	<class name="OrderEntity" table="`order`"><!-- 注意有些单词可能是特殊关键字 -->
+		<id name="id" column="id">
+			<generator class="identity" />
+		</id>
+		<property name="name" column="name"/>
+		<property name="phone" column="phone"/>
+		<property name="remark" column="remark"/>
+		<property name="date" column="date"/>
+		<property name="total" column="total"/>
+		<property name="post" column="post"/>
+		<property name="address" column="address"/>
+		<many-to-one name="statusEntity" column="FK_status" class="StatusEntity" />
+		<many-to-one name="userEntity" column="FK_user" class="UserEntity"/>
+		<bag name="itemEntities" cascade="save-update" lazy="false"><!-- 开启级联操作，保存order时会自动保存item -->
+			<key column="FK_order"/>
+			<one-to-many class="ItemEntity"/>
+		</bag>
+	</class>
+
+	<!-- 订单状态 -->
+	 <class name="StatusEntity" table="status">
+		 <id name="id" column="id">
+			 <generator class="identity" />
+		 </id>
+		<property name="status" column="status"/>
+		 <bag name="orderEntities"  lazy="false">
+			 <key column="FK_status"/>
+			 <one-to-many class="OrderEntity"/>
+		 </bag>
+	</class>
+	
+	<!-- 购物项 -->
+	 <class name="ItemEntity" table="item">
+		 <id name="id" column="id">
+			 <generator class="identity" />
+		 </id>
+		<property name="name" column="name"/>
+		<property name="price" column="price"/>
+		<property name="number" column="number"/>
+		 <many-to-one name="productEntity" column="FK_product" class="ProductEntity"/>
+		 <many-to-one name="orderEntity" column="FK_order" class="OrderEntity"/>
+	</class>
+	
+
+
+</hibernate-mapping>

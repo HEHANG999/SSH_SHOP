@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context-4.2.xsd
+           http://www.springframework.org/schema/aop
+           http://www.springframework.org/schema/aop/spring-aop-4.2.xsd
+           http://www.springframework.org/schema/tx
+           http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+<!--=================================================注入============================================================-->
+
+    <!-- 把ServiceImpl交给Spring管理 -->
+    <bean id="baseService" class="com.project.service.impl.BaseServiceImpl" lazy-init="true"><!-- 泛型类是不能实例化的，所以要加lazy-init属性 -->
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+    <!-- 增加parent属性，指明继承baseService -->
+    <bean id="adminService"    class="com.project.service.impl.AdminServiceImpl"    parent="baseService"/>
+    <bean id="categoryService" class="com.project.service.impl.CategoryServiceImpl" parent="baseService"/>
+    <bean id="productService"  class="com.project.service.impl.ProductServiceImpl"  parent="baseService"/>
+    <bean id="orderService"    class="com.project.service.impl.OrderServiceImpl"    parent="baseService"/>
+    <bean id="itemService"     class="com.project.service.impl.ItemServiceImpl"     parent="baseService"/>
+    <bean id="userService"     class="com.project.service.impl.UserServiceImpl"     parent="baseService"/>
+    <bean id="statusService"   class="com.project.service.impl.StatusServiceImpl"   parent="baseService"/>
+    <bean id="payService"      class="com.project.service.impl.PayServiceImpl"/>
+
+    <!-- 把Action交给Spring管理，在struts.xml中调用 -->
+    <bean id="baseAction" class="com.project.action.BaseAction" scope="prototype">  <!-- scope如果是prototype类型，告诉Spring这个对象的管理使用非单例模式，使用时创建，不是启动时自动创建 -->
+        <property name="categoryService" ref="categoryService"/>
+        <property name="adminService"    ref="adminService"/>
+        <property name="productService"  ref="productService"/>
+        <property name="orderService"    ref="orderService"/>
+        <property name="itemService"     ref="itemService"/>
+        <property name="userService"     ref="userService"/>
+        <property name="statusService"   ref="statusService"/>
+        <property name="payService"      ref="payService"/>
+    </bean>
+    <!-- 继承baseAction -->
+    <bean id="categoryAction" class="com.project.action.CategoryAction" scope="prototype" parent="baseAction"/>
+    <bean id="adminAction"    class="com.project.action.AdminAction"    scope="prototype" parent="baseAction"/>
+    <bean id="productAction"  class="com.project.action.ProductAction"  scope="prototype" parent="baseAction"/>
+    <bean id="orderAction"    class="com.project.action.OrderAction"    scope="prototype" parent="baseAction"/>
+    <bean id="itemAction"     class="com.project.action.ItemAction"     scope="prototype" parent="baseAction"/>
+    <bean id="userAction"     class="com.project.action.UserAction"     scope="prototype" parent="baseAction"/>
+    <bean id="payAction"      class="com.project.action.PayAction"      scope="prototype" parent="baseAction"/>
+    <bean id="sendAction"     class="com.project.action.SendAction" />
+
+
+    <!--=================================================配置============================================================-->
+
+    <!-- 扫描注解 -->
+    <context:component-scan base-package="com.project.*"/>
+
+    <!-- 加载配置文件，使用注解的方式注入，主要用在java代码中使用注解注入properties文件中相应的value值 -->
+    <bean id="prop" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+        <property name="locations">
+            <array>
+                <value>classpath:config.properties</value>
+            </array>
+        </property>
+    </bean>
+
+    <!-- 数据源 -->
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="com.mysql.cj.jdbc.Driver" />
+        <property name="jdbcUrl"     value="jdbc:mysql://localhost:3306/ssh_shop?useSSL=false&amp;serverTimezone=UTC" />
+        <property name="user"        value="root" />
+        <property name="password"    value="root" />
+    </bean>
+
+    <!-- SessionFactory配置，用来产生session，不用工具类生成 -->
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+        <property name="dataSource" ref="dataSource" />
+        <property name="configLocation" value="classpath:hibernate.cfg.xml" /><!--  加载hibernate配置文件 -->
+    </bean>
+
+    <!-- 事务管理器，用来管理SessionFactory -->
+    <bean id="transactionManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+
+    <!-- 哪些方法需要什么类型的事务 -->
+    <tx:advice id="advice"><!-- transaction-manager默认="transactionManager" -->
+        <tx:attributes>
+            <tx:method name="*"/><!-- 没有事务新建，已有则加入，propagation默认="REQUIRED" -->
+        </tx:attributes>
+    </tx:advice>
+
+    <!-- 配置aop切面 -->
+    <aop:config>
+        <!-- 配置哪些包的类要切入事务 -->
+        <aop:pointcut id="pointcut" expression="execution(* com.project.service.impl.*.*(..))" />
+        <aop:advisor advice-ref="advice" pointcut-ref="pointcut"/>
+        <!-- aop:pointcut要写在aop:advisor上面，否则会报错 -->
+    </aop:config>
+
+</beans>

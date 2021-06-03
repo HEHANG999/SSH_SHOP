@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='gb2312'?> 
+<!DOCTYPE hibernate-configuration PUBLIC 
+          "-//Hibernate/Hibernate Configuration DTD 3.0//EN" 
+          "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd"> 
+<hibernate-configuration> 
+  <session-factory> 
+     
+     <!-- 数据源配置 -->
+	 <property name="hibernate.c3p0.max_size">20</property>
+	 <property name="hibernate.c3p0.min_size">5</property>
+	 <property name="hibernate.c3p0.timeout">120</property>
+	 <property name="hibernate.c3p0.max_statements">100</property>
+	 <property name="hibernate.c3p0.idle_test_period">120</property>
+	 <property name="hibernate.c3p0.acquire_increment">2</property><!-- 当连接池耗尽并接到获得连接的请求，则新增加连接的数量 -->
+	 <property name="hibernate.c3p0.validate">true</property><!-- 是否验证，检查连接 -->
+		  
+     <!-- Hibernate配置 -->
+     <property name="dialect">org.hibernate.dialect.MySQL8Dialect</property><!-- 方言 -->
+     <property name="show_sql">true</property><!-- 控制台显示sql -->
+	  <property name="format_sql">false</property><!-- 格式化控制台sql -->
+     
+    
+	 <!-- 配置二级缓存提供商，注意此处并不是缓存的jar包 -->
+	 <property name="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.EhCacheRegionFactory</property>
+	  <mapping class="com.project.entity.AdminEntity" />
+	  <mapping class="com.project.entity.CategoryEntity" />
+	  <mapping class="com.project.entity.ProductEntity" />
+	  <mapping class="com.project.entity.OrderEntity" />
+	  <mapping class="com.project.entity.StatusEntity" />
+	  <mapping class="com.project.entity.ItemEntity" />
+
+	 <!-- 实体映射文件 -->
+	 <mapping resource="mapping.xml"/>
+	 
+	 <!-- 配置哪些类支持缓存，这里主要是显示首页的热门商品，所以Product类支持缓存 -->
+	 <class-cache usage="read-write" class="com.project.entity.ProductEntity"/>
+     
+  </session-factory> 
+</hibernate-configuration>    
+  
+ 

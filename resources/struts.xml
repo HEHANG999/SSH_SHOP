@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+        "-//Apache Software Foundation//DTD Struts Configuration 2.3//EN"
+        "http://struts.apache.org/dtds/struts-2.3.dtd">
+<struts>
+
+    <package name="shop" extends="json-default"><!-- json-default继承了struts-default -->
+        <global-results>  <!-- 全局result，对这个package中的所有action有效 -->
+            <result name="aIndex">/WEB-INF/main/aIndex.jsp</result><!-- 若返回字符串"aIndex"，则跳转至aIndex.jsp页面 -->
+            <result name="stream" type="stream">
+                <param name="inputName">inputStream</param>
+            </result>
+        </global-results>
+
+        <!-- 用来完成系统 请求转发的action,所有的请求都交给execute-->
+        <action name="send_*_*" class="sendAction">
+            <result name="send">/WEB-INF/{1}/{2}.jsp</result>
+        </action>
+
+        <!-- 管理员 -->
+        <action name="admin_*" class="adminAction" method="{1}"><!-- 如category_update.action： 访问的是update方法；交给Spring后，class对应的是Spring中配置该Action(bean)的id值，就不是包名+类名全路径了 -->
+            <result name="jsonList" type="json"><!-- 必须要先添加json包，然后上面继承json-default -->
+                <param name="root">jsonList</param><!-- 要转换成json对象的数据 -->
+                <param name="excludeProperties"> <!-- 属性过滤器，配置黑名单，过滤不需要的选项 ，支持正则表达式，json格式：{total:3,rows:[{account:{id:2,login:"user",name:"客服A",pass:"user"},hot:true,id:3,…}]} -->
+                    \[\d+\]\.pass,\[\d+\]\.name
+                </param>
+            </result>
+            <result name="index">/index.jsp</result>
+            <allowed-methods>query</allowed-methods><!-- struts2.2.5配置使通配符生效 -->
+        </action>
+
+        <!-- 商品类别 -->
+        <action name="category_*" class="categoryAction" method="{1}">
+            <result name="jsonMap" type="json">
+                <param name="root">pageMap</param>
+                <param name="excludeProperties">
+                    rows\[\d+\]\.adminEntity\.pass,<!-- 把所有adminEntity属性过滤掉，否则会出现懒加载问题 -->
+                </param>
+            </result>
+            <result name="index">/index.jsp</result>
+            <result name="stream" type="stream"> <!-- 以stream的形式，type为stream -->
+                <param name="inputName">inputStream</param> <!-- InputStream中有要传的数据 -->
+            </result>
+            <result name="jsonList" type="json">
+                <param name="root">jsonList</param>
+                <param name="excludeProperties">
+                    \[\d+\]\.accountEntity,\[\d+\]\.pass,\[\d+\]\.name
+                </param>
+            </result>
+            <allowed-methods>save,deleteByIds,update,query,queryJoinAdmin</allowed-methods>
+        </action>
+
+
+        <!-- 商品 -->
+        <action name="product_*" class="productAction" method="{1}">
+            <result name="jsonMap" type="json">
+                <param name="root">pageMap</param>
+                <param name="excludeProperties">
+                    rows\[\d+\]\.categoryEntity\.adminEntity,
+                </param>
+            </result>
+            <result name="stream" type="stream">
+                <param name="inputName">inputStream</param>
+            </result>
+            <result name="detail">/detail.jsp</result>
+            <allowed-methods>save,deleteByIds,update,queryJoinCategory,get</allowed-methods>
+        </action>
+
+        <!-- 购物项 -->
+        <action name="item_*" class="itemAction" method="{1}">
+            <result name="showCart">/showCart.jsp</result>
+            <result name="jsonList" type="json"></result>
+            <allowed-methods>addItem,updateItem,querySale</allowed-methods>
+        </action>
+
+        <!-- 用户 -->
+        <action name="user_*" class="userAction" method="{1}">
+            <result name="login">/ulogin.jsp</result>
+            <result name="goUrl" type="redirect">${#session.goUrl}</result> <!-- 从值栈中取出session中的数据 -->
+            <allowed-methods>login</allowed-methods>
+        </action>
+
+        <!-- 订单 -->
+        <action name="order_*" class="orderAction" method="{1}">
+            <result name="bank" type="redirect">/user/bank.jsp</result>
+            <allowed-methods>save</allowed-methods>
+        </action>
+
+        <!-- 支付 -->
+        <action name="pay_*" class="payAction" method="{1}">
+            <result name="pay">/user/pay.jsp</result>
+            <allowed-methods>goBank,backBank</allowed-methods>
+        </action>
+
+    </package>
+
+</struts>
